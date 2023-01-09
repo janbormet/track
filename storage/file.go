@@ -8,26 +8,18 @@ import (
 	"track/types"
 )
 
-const defaultDataDir = ".tracker"
-const defaultDataFile = "data.json"
-
 type FileStorage struct {
 	filepath string
 	layout   types.Layout
 	hasData  bool
 }
 
-func NewDefaultFileStorage() *FileStorage {
-	home, err := os.UserHomeDir()
+func createFileIfNotExists(dataDirPath string, dataFileName string) bool {
+	err := os.MkdirAll(dataDirPath, os.ModePerm)
 	if err != nil {
 		panic(err)
 	}
-
-	err = os.MkdirAll(path.Join(home, defaultDataDir), os.ModePerm)
-	if err != nil {
-		panic(err)
-	}
-	dataPath := path.Join(home, defaultDataDir, defaultDataFile)
+	dataPath := path.Join(dataDirPath, dataFileName)
 	hasData := false
 	stat, err := os.Stat(dataPath)
 	if errors.Is(err, os.ErrNotExist) {
@@ -42,9 +34,37 @@ func NewDefaultFileStorage() *FileStorage {
 		}
 		hasData = true
 	}
+	return hasData
+}
+
+func NewDefaultJSONFileStorage() *FileStorage {
+	const defaultDataDir = ".tracker"
+	const defaultDataFileName = "data.json"
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	hasData := createFileIfNotExists(path.Join(home, defaultDataDir), defaultDataFileName)
 	return &FileStorage{
-		filepath: dataPath,
+		filepath: path.Join(home, defaultDataDir, defaultDataFileName),
 		layout:   layout.JSONLayout,
+		hasData:  hasData,
+	}
+}
+
+func NewDefaultTimewFileStorage() *FileStorage {
+	const defaultDataDir = ".tracker"
+	const defaultDataFileName = "data.timew"
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	hasData := createFileIfNotExists(path.Join(home, defaultDataDir), defaultDataFileName)
+	return &FileStorage{
+		filepath: path.Join(home, defaultDataDir, defaultDataFileName),
+		layout:   layout.TimewLayout,
 		hasData:  hasData,
 	}
 }
