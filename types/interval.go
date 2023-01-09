@@ -1,6 +1,7 @@
 package types
 
 import (
+	"regexp"
 	"time"
 )
 
@@ -34,7 +35,16 @@ func (t Tag) String() string {
 }
 
 func MakeTag(s string) Tag {
-	return Tag(s)
+	illegal := regexp.MustCompile("[^A-Za-z0-9-]")
+	return Tag(illegal.ReplaceAll([]byte(s), []byte("")))
+}
+
+func TagsToStringSlice(tags ...Tag) []string {
+	res := make([]string, len(tags))
+	for i, tag := range tags {
+		res[i] = tag.String()
+	}
+	return res
 }
 
 func MakeTags(t ...string) []Tag {
@@ -43,4 +53,26 @@ func MakeTags(t ...string) []Tag {
 		tags[i] = MakeTag(tag)
 	}
 	return tags
+}
+
+func MakeIntervals() Intervals {
+	return Intervals{
+		Intervals:     []Interval{},
+		OpenIntervals: []OpenInterval{},
+	}
+}
+
+func MakeInterval(start time.Time, end time.Time, tags ...Tag) Interval {
+	return Interval{
+		Start: start,
+		End:   end,
+		Tags:  tags,
+	}
+}
+
+func MakeOpenInterval(start time.Time, tags ...Tag) OpenInterval {
+	return OpenInterval{
+		Start: start,
+		Tags:  tags,
+	}
 }
