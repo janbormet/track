@@ -12,11 +12,18 @@ import (
 )
 
 var tags string
+var storageType string
+
+const fileTimew = "file-timew"
+const fileJSON = "file-json"
 
 func main() {
 
 	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
 	startCmd.StringVar(&tags, "tags", "", "Supply tags as comma separated list. Example: a,b,c")
+	startCmd.StringVar(&storageType, "storage", "file-json", "Supply the type of storage to be used (file-json or file-timew)")
+	stopCmd := flag.NewFlagSet("stop", flag.ExitOnError)
+	stopCmd.StringVar(&storageType, "storage", "file-json", "Supply the type of storage to be used (file-json or file-timew)")
 
 	_ = flag.NewFlagSet("stop", flag.ExitOnError)
 	if len(os.Args) < 2 {
@@ -27,29 +34,47 @@ func main() {
 	case "start":
 		start(startCmd)
 	case "stop":
-		stop()
+		stop(stopCmd)
 	}
 }
 
 func start(startCmd *flag.FlagSet) {
 	_ = startCmd.Parse(os.Args[2:])
-	fmt.Println(strings.Split(tags, ","))
-	err := tracker.Start(defaultContext(), types.MakeTags(strings.Split(tags, ",")...))
+	switch storageType {
+	case "file-json":
+		err := tracker.Start(getContext(), types.MakeTags(strings.Split(tags, ",")...))
+		if err != nil {
+			panic(err)
+		}
+
+	}
+
+}
+
+func stop(stopCmd *flag.FlagSet) {
+	_ = stopCmd.Parse(os.Args[2:])
+	err := tracker.Stop(getContext())
 	if err != nil {
 		panic(err)
 	}
 }
 
-func stop() {
-	err := tracker.Stop(defaultContext())
-	if err != nil {
-		panic(err)
-	}
-}
-
-func defaultContext() tracker.Context {
-	return tracker.Context{
-		Storage: storage.NewDefaultFileStorage(),
-		Time:    time.Now(),
+func getContext() tracker.Context {
+	switch storageType {
+	case fileJSON:
+		return tracker.Context{
+			Storage: storage.NewDefaultJSONFileStorage(),
+			Time:    time.Now(),
+		}
+	case fileTimew:
+		return tracker.Context{
+			Storage: storage.NewDefaultTimewFileStorage(),
+			Time:    time.Now(),
+		}
+	default:
+		return tracker.Context{
+			Storage: storage.NewDefaultJSONFileStorage(),
+			Time:    time.Now(),
+		}
 	}
 }
